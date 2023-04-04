@@ -1,0 +1,31 @@
+#!/opt/software/Python/3.9.5-GCCcore-10.3.0/bin/python
+import yt
+import os, argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--Lbox', help='Length of the box in code units', default=0.08) # 2 Mpccm/h in a 25 Mpccm/h box
+args = parser.parse_args()
+
+enzo_out_dir = os.getcwd()
+Lbox = args.Lbox
+
+ts = yt.load(enzo_out_dir + "/DD????/DD????")
+
+last_ds = yt.load(ts.outputs[-1])
+
+@yt.particle_filter(requires=["particle_type"], filtered_type="all")
+def MustRefineParticle(pfilter, data):
+    return data[(pfilter.filtered_type, "particle_type")] == 4
+
+last_ds.add_particle_filter("MustRefineParticle")
+
+for x in last_ds.derived_field_list:
+    print(x) 
+
+ad = last_ds.all_data()
+
+num_mrp = ad[("MustRefineParticle", "particle_mass").shape
+num_all = ad[("all", "particle_mass")].shape
+
+print(f"All particles: {num_all}\nMustRefine Particles: {num_mrp}")
+

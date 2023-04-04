@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# set up the shell to have the right environment
+ml -* GCC/6.4.0 OpenMPI/2.1.2 HDF5/1.8.20
+
+export MODE=2
+
+which enzo
+
+# use this for generically running enzo with $1 processors on parameter file $2
+if [ $MODE -eq 1 ]
+then
+    mpirun -n $1 enzo $2
+
+
+# use this for running something from home with all data output to scratch
+elif [ $MODE -eq 2 ]
+then
+
+    # modify these to match whatever job you're running
+    export PARAM_FILE=/mnt/home/llorente/halo_4954/lowres_run/AGN_test/AGN_test.enzo
+    export WORKING_DIR=/mnt/home/llorente/halo_4954/lowres_run/AGN_test/scratch
+    export IC_DIR=/mnt/home/llorente/halo_4954/lowres_run/AGN_test/AGNtest_ICs
+
+    cd $WORKING_DIR
+
+    cp $PARAM_FILE $WORKING_DIR/.
+    cp $IC_DIR/* $WORKING_DIR/.
+
+    #mpirun -n 4 enzo $PARAM_FILE
+    enzo -d $PARAM_FILE
+# use this for restarting enzo from a previous output
+elif [ $MODE -eq 3 ]
+then
+    # right before AGN spawns
+    #export RESTART_FROM=DD0075
+
+    # some time after AGN spawns
+    export RESTART_FROM=DD0100
+    export WORKING_DIR=/mnt/home/llorente/halo_4954/lowres_run/AGN_test/scratch
+
+    cd $WORKING_DIR
+    mpirun -n 4 enzo -r $RESTART_FROM/$RESTART_FROM
+
+# use this for debugging enzo
+elif [ $MODE -eq 4 ]
+then
+
+    module purge
+    ml -* GCC/6.4.0 OpenMPI/2.1.2 HDF5/1.8.20
+    # right before AGN spawns
+    #export RESTART_FROM=DD0075
+
+    # some time after AGN spawns
+    export RESTART_FROM=DD0100
+    export WORKING_DIR=/mnt/home/llorente/halo_4954/lowres_run/AGN_test/scratch
+
+    cd $WORKING_DIR
+    gdb --args enzo -d -r $RESTART_FROM/$RESTART_FROM
+
+else
+    echo "invalid mode: $MODE"
+fi
+
+

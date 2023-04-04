@@ -1,0 +1,56 @@
+#!/opt/software/Python/3.9.5-GCCcore-10.3.0/bin/python
+import yt
+import sys, os, argparse
+
+from utils import CMAPS
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--Lbox', help='Length of the box in code units', default=1.0) # Do entire box
+args = parser.parse_args()
+
+enzo_out_dir = os.getcwd()
+Lbox = args.Lbox
+
+yt.enable_parallelism()
+
+ts = yt.load(enzo_out_dir + "/DD????/DD????")
+
+first_ds = yt.load(ts.outputs[0])
+zmin, zmax = 0, first_ds.parameters['MaximumRefinementLevel']
+
+
+storage={}
+for sto, ds in ts.piter(storage=storage):
+
+  
+    ad = ds.all_data()
+
+    L = ds.quan(Lbox, "code_length")
+    point_5 = ds.quan(0.5, "code_length")
+
+    x = point_5 - L/2
+    y = point_5 - L/2
+    z = point_5 - L/2
+    region = ds.r[x:x+L, y:y+L, z:z+L]
+
+    plot = yt.ProjectionPlot(ds, 'z', ("index", "grid_level"), 
+        center=(0.5, 0.5, 0.5), 
+        method="mip",
+        width=L, 
+        weight_field=None,
+        data_source=region)
+    plot.annotate_timestamp(redshift=True)
+    plot.set_zlim(("index", "grid_level"), zmin=zmin, zmax=zmax)
+    plot.set_log(("index", "grid_level"), log=False)
+    plot.set_cmap(("index", "grid_level"), "Dark2")
+    plot.save(f"temp/{str(ds)}_grid_levels.png")
+
+if (yt.is_root()):
+
+    start_number = int(ts.outputs[0][-4:])
+    os.system("pwd")
+    os.system(f'run_ffmpeg ~/analysis_code/grid_levels.mp4 temp/DD%04d_grid_levels.png {start_number}')
+
+
+
+

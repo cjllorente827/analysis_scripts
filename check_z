@@ -1,0 +1,5 @@
+#!/bin/bash
+
+
+echo "FILE REDSHIFT TIME"
+awk 'BEGIN { FS = "=" } ; /^InitialTime/ {t = $2} /^CosmologyCurrentRedshift/{print FILENAME $2 t};  '  ./[RD]D[0-9][0-9][0-9][0-9]/[RD]D[0-9][0-9][0-9][0-9]

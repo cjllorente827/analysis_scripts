@@ -1,0 +1,6 @@
+#!/bin/bash
+
+module load GCC/11.2.0  OpenMPI/4.1.1 FFTW/3.3.10 GSL/2.7
+
+MUSIC $1
+

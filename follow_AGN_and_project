@@ -1,0 +1,36 @@
+#!/opt/software/Python/3.9.5-GCCcore-10.3.0/bin/python
+import yt
+import sys, os, argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--field', help='Field to project along')
+args = parser.parse_args()
+
+enzo_out_dir = os.getcwd()
+field = args
+
+@yt.particle_filter(requires=["particle_type"], filtered_type="AGNParticle")
+def AGN(pfilter, data):
+    return data[(pfilter.filtered_type, "particle_type")] == 5
+
+#yt.enable_parallelism()
+
+ts = yt.load(enzo_out_dir + "/RD????/RD????")
+
+storage = {}
+
+for sto, ds in ts.piter(storage=storage):
+    ds.add_particle_filter("AGN")
+    ad = ds.all_data()
+    pos = (
+        ad["AGNParticle", "particle_position_x"], 
+        ad["AGNParticle", "particle_position_y"], 
+        ad["AGNParticle", "particle_position_z"]
+    )
+    print(pos)
+    sto.result = pos
+    sto.result_id = str(ds)
+
+print(storage)
+
+

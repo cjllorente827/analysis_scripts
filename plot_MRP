@@ -1,0 +1,63 @@
+#!/opt/software/Python/3.9.5-GCCcore-10.3.0/bin/python
+import yt
+import os, argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--Lbox', help='Length of the box in code units', type=float, default=0.08) # 2 Mpccm/h in a 25 Mpccm/h box
+args = parser.parse_args()
+
+enzo_out_dir = os.getcwd()
+Lbox = args.Lbox
+
+@yt.particle_filter(requires=["particle_type"], filtered_type="all")
+def MustRefineParticle(pfilter, data):
+    return data[(pfilter.filtered_type, "particle_type")] == 4
+
+yt.enable_parallelism()
+
+ts = yt.load(enzo_out_dir + "/DD????/DD????")
+
+
+storage={}
+for sto, ds in ts.piter(storage=storage):
+
+    ds.add_particle_filter("MustRefineParticle")
+    
+    ad = ds.all_data()
+
+    com = ad.quantities.center_of_mass(
+        use_gas=False, 
+        use_particles=True, 
+        particle_type="MustRefineParticle")
+
+    # multiplying by 1.1 gives some extra padding that eliminates dead zones at the edge of the image
+    if Lbox < 1.0:
+        L = 1.1*ds.quan(Lbox, "code_length")
+    else:
+        L = ds.quan(1.0, "code_length")
+
+
+    x = com[0] - L/2
+    y = com[1] - L/2
+    z = com[2] - L/2
+    region = ds.r[x:x+L, y:y+L, z:z+L]
+
+    plot = yt.ParticlePlot(ds, 
+        ("MustRefineParticle", "particle_position_x"), 
+        ("MustRefineParticle", "particle_position_y"),
+        width=Lbox,
+        data_source = region)
+    plot.annotate_timestamp(redshift=True)
+    plot.annotate_sphere(com, radius=(2,'kpc'), circle_args={"color": "red"})
+    plot.save(f"temp/{str(ds)}_MRP.png")
+
+
+if (yt.is_root()):
+
+    start_number = int(ts.outputs[0][-4:])
+    os.system("pwd")
+    os.system(f'run_ffmpeg ~/analysis_code/particles.mp4 temp/DD%04d_MRP.png {start_number}')
+
+
+
+
