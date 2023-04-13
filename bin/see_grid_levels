@@ -1,19 +1,26 @@
-#!/opt/software/Python/3.9.5-GCCcore-10.3.0/bin/python
-import yt
-import sys, os, argparse
+#!/usr/bin/env python3
 
+import yt 
+import os, argparse
+import numpy as np
 from utils import CMAPS
+import matplotlib.pyplot as plt
+
+def see_grid_levels(enzo_dataset, box_spec_file):
+
+    box = Box(args.box)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--Lbox', help='Length of the box in code units', default=1.0) # Do entire box
+parser.add_argument('--box', help="Name of a file containing center (x, y, z) and length of box of interest in code units, comma-separated.", default=None)
 args = parser.parse_args()
+
 
 enzo_out_dir = os.getcwd()
 Lbox = args.Lbox
 
 yt.enable_parallelism()
 
-ts = yt.load(enzo_out_dir + "/DD????/DD????")
+ts = yt.load(enzo_out_dir + "/RD????/RD????")
 
 first_ds = yt.load(ts.outputs[0])
 zmin, zmax = 0, first_ds.parameters['MaximumRefinementLevel']
@@ -49,7 +56,7 @@ if (yt.is_root()):
 
     start_number = int(ts.outputs[0][-4:])
     os.system("pwd")
-    os.system(f'run_ffmpeg ~/analysis_code/grid_levels.mp4 temp/DD%04d_grid_levels.png {start_number}')
+    os.system(f'run_ffmpeg ~/analysis_code/grid_levels.mp4 temp/RD%04d_grid_levels.png {start_number}')
 
 
 

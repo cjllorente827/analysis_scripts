@@ -4,6 +4,18 @@ import sys, os, argparse
 from utils import CMAPS
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import AxesGrid
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--field', help='Field to project along', default="density")
+parser.add_argument('--Lbox', help='Length of the box in code units', default=1.0, type=float) # Do entire box
+parser.add_argument('--grids', help="True if you want to display grid lines, False by default", default=False)
+args = parser.parse_args()
+
+enzo_out_dir = os.getcwd()
+field = args.field
+Lbox = args.Lbox
+grids = args.grids
+
 fig = plt.figure()
 
 grid = AxesGrid(
@@ -19,20 +31,9 @@ grid = AxesGrid(
     aspect=False,
 )
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--field', help='Field to project along', default="density")
-parser.add_argument('--Lbox', help='Length of the box in code units', default=1.0, type=float) # Do entire box
-parser.add_argument('--grids', help="True if you want to display grid lines, False by default", default=False)
-args = parser.parse_args()
-
-enzo_out_dir = os.getcwd()
-field = args.field
-Lbox = args.Lbox
-grids = args.grids
-
 yt.enable_parallelism()
 
-ts = yt.load(enzo_out_dir + "/DD????/DD????")
+ts = yt.load(enzo_out_dir + "/RD????/RD????")
 
 last_ds = yt.load(ts.outputs[-1])
 
@@ -107,7 +108,7 @@ if (yt.is_root()):
 
     start_number = int(ts.outputs[0][-4:])
     os.system("pwd")
-    os.system(f'run_ffmpeg ~/analysis_code/{field}_projection.mp4 temp/DD%04d_{field}.png {start_number}')
+    os.system(f'run_ffmpeg ~/analysis_scripts/{field}_projection.mp4 temp/RD%04d_{field}.png {start_number}')
 
 
 

@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+import yt 
+import trident
+import os, argparse
+import numpy as np
+from utils import CMAPS
+import matplotlib.pyplot as plt
+
+
+enzo_out_dir = os.getcwd()
+ts = yt.load(enzo_out_dir + "/RD????/RD????")
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--box', help="Name of a file containing center (x, y, z) and length of box of interest in code units, comma-separated.", default=None)
+args = parser.parse_args()
+
+field = "density"
+
+if args.box == None:
+    center = np.array([0.5,0.5,0.5])
+    Lbox = 1.
+else:
+    *center, Lbox = np.genfromtxt(args.box, delimiter=',', unpack=True)
+
+print(f"Creating spectra of box around ({center[0]},{center[1]},{center[2]}). ")
+print(f"Box will have a length of {Lbox}.")
+
+box_left_edge = center - Lbox/2
+box_right_edge = center + Lbox/2
+
+line_list = ['H', 'C', 'N', 'O', 'Mg']
+
+last_ds = yt.load(ts.outputs[-1])
+
+ad = last_ds.all_data()
+zmin, zmax = ad.quantities.extrema(field)
+
+storage={}
+for sto, ds in ts.piter(storage=storage):
+
+    # ray_start = box_left_edge
+    # ray_end = box_right_edge
+
+    ray_start = [0.5, 0.5, 0]
+    ray_end = [0.5, 0.5, 1]
+
+    L = ds.quan(Lbox, "code_length")
+    x0 = ds.quan(center[0], "code_length")
+    y0 = ds.quan(center[1], "code_length")
+    z0 = ds.quan(center[2], "code_length")
+
+    x = x0 - L/2
+    y = y0 - L/2
+    z = z0 - L/2
+    region = ds.r[x:x+L, y:y+L, z:z+L]
+
+    ray = trident.make_simple_ray(ds,
+        ray_start,
+        ray_end,
+        data_filename="ray.h5",
+        lines=line_list)
+    
+    proj = yt.ProjectionPlot(ds, 'z', field, 
+        center=center, 
+        width=L, 
+        weight_field="density",
+        data_source=region)
+    proj.annotate_timestamp(redshift=True)
+
+    proj.annotate_ray(ray, arrow=True)
+    proj.annotate_marker(ray_start, coord_system="data")
+        
+    proj.set_zlim(field, zmin=zmin, zmax=zmax)
+    proj.set_cmap(field, CMAPS[field])
+    proj.set_axes_unit('kpc')
+
+    proj.save(f"{os.path.expanduser('~/analysis_scripts')}/{str(ds)}_ray.png")
+
+    sg = trident.SpectrumGenerator('COS-G130M')
+    sg.make_spectrum(ray, lines=line_list)
+
+    sg.add_qso_spectrum()
+    #sg.add_gaussian_noise(30)
+    sg.save_spectrum('spec_raw.txt')
+    sg.plot_spectrum(f"{os.path.expanduser('~/analysis_scripts')}/{str(ds)}_spectra.png")
