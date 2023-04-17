@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 #from ndustria import AddTask
-from Box import Box
+from ..Box import Box
 import yt, trident, os
 import numpy as np
-from utils import findEnzoOuts
+from ..utils import findEnzoOuts, getDataBoxAndRegion, getOutputDir, getTempDir
+from ndustria import AddTask
 
 line_list = ['H', 'C', 'N', 'O', 'Mg']
 field = "density"
@@ -13,18 +14,7 @@ field = "density"
 #@AddTask
 def create_dataset(enzo_dataset, box_spec_file, n_sightlines):
 
-    box = Box(box_spec_file)
-
-    ds = yt.load(enzo_dataset)
-
-    LL = box.lowerLeft()
-    UR = box.upperRight()
-
-    region = ds.r[
-        LL[0]:UR[0],
-        LL[1]:UR[1],
-        LL[2]:UR[2],
-    ]
+    ds, box, region = getDataBoxAndRegion(enzo_dataset, box_spec_file)
 
     sightlines = create_sightlines(box, n_sightlines)
 
@@ -46,23 +36,11 @@ def create_dataset(enzo_dataset, box_spec_file, n_sightlines):
     proj.set_cmap(field, 'viridis')
     proj.set_axes_unit('kpc')
 
-    proj.save(f"{os.path.expanduser('~/analysis_scripts')}/{str(ds)}_sightlines.png")
+    proj.save(f"{getOutputDir()}/{str(ds)}_sightlines.png")
 
 
     for i,line in enumerate(sightlines):
-        ray = trident.make_simple_ray(ds,
-        line[0],
-        line[1],
-        data_filename="ray.h5",
-        lines=line_list)
-
-        sg = trident.SpectrumGenerator('COS-G130M')
-        sg.make_spectrum(ray, lines=line_list)
-
-        sg.add_qso_spectrum()
-        #sg.add_gaussian_noise(30)
-        sg.save_spectrum('spec_raw.txt')
-        sg.plot_spectrum(f"{os.path.expanduser('~/analysis_scripts')}/temp/{str(ds)}_spectra_{i}.png")
+        make_spectra(ds, i, line, line_list)
 
 # Note to self: This assumes we're projecting our sightlines along z
 # Eventually might have to transform the result onto arbitrary axis
@@ -84,6 +62,27 @@ def create_sightlines(box, N):
             sightlines[i*root+j][1] += [d*(j+1), d*(i+1), 1.]
 
     return sightlines
+
+#@AddTask()
+def make_spectra(ds, index, line, line_list):
+
+    ray = trident.make_simple_ray(ds,
+        line[0],
+        line[1],
+        data_filename="ray.h5",
+        lines=line_list)
+
+    sg = trident.SpectrumGenerator('COS-G130M')
+    sg.make_spectrum(ray, lines=line_list)
+
+    sg.add_qso_spectrum()
+    #sg.add_gaussian_noise(30)
+
+    output_file = f'{getOutputDir()}/spec_raw_{index}.txt'
+    sg.save_spectrum(output_file)
+    sg.plot_spectrum(f"{getOutputDir()}/{str(ds)}_spectra_{index}.png")
+
+    return output_file
 
 
 if __name__ == "__main__":

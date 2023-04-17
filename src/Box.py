@@ -23,6 +23,9 @@ class Box:
     def __str__(self):
         return f"A box located at ({self.x},{self.y},{self.z}) with side length {self.length}"
     
+    def __repr__(self):
+        return str(self)
+
     def lowerLeft(self):
 
         return self.center - self.length/2

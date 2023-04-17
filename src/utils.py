@@ -1,4 +1,6 @@
 import os, re
+from .Box import Box
+import yt
 
 CMAPS = {
     "density" : "viridis",
@@ -33,3 +35,44 @@ def findEnzoOuts():
         return matched_files[0]
     
     return matched_files
+
+def getDataBoxAndRegion(enzo_dataset, box_spec_file):
+
+    """Convenience function that takes the filepaths of an enzo dataset and
+    and Box specifier and returns a YTDataset and YTRegion for each on
+    respectively.
+    
+    Arguments:
+    enzo_dataset -- Filepath to a single enzo dataset
+    box_spec_file -- Filepath to a Box specifier
+    """
+
+    ds = yt.load(enzo_dataset)
+
+    box = Box(box_spec_file)
+
+    LL = box.lowerLeft()
+    UR = box.upperRight()
+
+    region = ds.r[
+        LL[0]:UR[0],
+        LL[1]:UR[1],
+        LL[2]:UR[2],
+    ]
+
+    return ds, box, region
+
+
+def getOutputDir():
+
+    if "ANALYSIS_OUT" not in os.environ:
+        return f"{os.path.expanduser('~/analysis_scripts/output')}"
+    else:
+        return os.environ["ANALYSIS_OUT"]
+    
+def getTempDir():
+
+    if "ANALYSIS_TEMP" not in os.environ:
+        return f"{os.path.expanduser('~/analysis_scripts/temp')}"
+    else:
+        return os.environ["ANALYSIS_TEMP"]
