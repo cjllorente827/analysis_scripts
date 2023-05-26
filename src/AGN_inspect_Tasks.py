@@ -65,7 +65,7 @@ def getAllAGNData(enzo_out):
 
             return data
             
-    return None
+    return ""
 # end getAllAGNData
 
 

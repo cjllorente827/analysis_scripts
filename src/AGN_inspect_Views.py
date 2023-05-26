@@ -1,5 +1,5 @@
 from ndustria import AddView
-from AGN_inspect_Tasks import *
+# from AGN_inspect_Tasks import *
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -7,14 +7,15 @@ from matplotlib import cm as colormap
 matplotlib.rcParams.update({'font.size': 16})
 import numpy as np
 
+from .utils import getOutputDir
 
-USE_DARK = True
+USE_DARK = False
 
 if USE_DARK:
     plt.style.use('dark_background')
 
 
-@AddView(looks_at=getAllAGNData, match="all", root_proc_only=True)
+@AddView(root_only=True)
 def AGNFullView(allData):
     
     fig = plt.figure(figsize=(19.3,10.6))
@@ -43,7 +44,7 @@ def AGNFullView(allData):
 
     for i, data in enumerate(allData):
 
-        if data == None: continue
+        if data == "": continue
 
         x[i] = data.x
         y[i] = data.y
@@ -111,8 +112,9 @@ def AGNFullView(allData):
 
     table.scale(1, 2)
 
-
-    mass_over_time.semilogy(redshift, masses)
+    # print(redshift)
+    # print(masses)
+    mass_over_time.scatter(redshift, masses)
     mass_over_time.invert_xaxis()
     mass_over_time.set_ylabel("$M_{BH}$ (M$_{\odot}$)")
     mass_over_time.set_xlabel("Redshift")
@@ -124,5 +126,5 @@ def AGNFullView(allData):
 
 
     #plt.tight_layout()
-    plt.savefig("AGN_inspect.png")
+    plt.savefig(f"{getOutputDir()}/AGN_inspect.png")
 

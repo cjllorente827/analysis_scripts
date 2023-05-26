@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Tempest",
+            "type": "python",
+            "request": "launch",
+            "program": "/mnt/home/llorente/analysis_scripts/bin/run_CGM_analysis",
+            "cwd" : "/mnt/gs21/scratch/llorente/Tempest",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "AGN_test",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "cwd" : "/mnt/home/llorente/halo_4954/lowres_run/AGN_test/scratch",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

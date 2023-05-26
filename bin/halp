@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ls ~/analysis_code | grep -Ev '.py|.mp4|__'
+ls ~/analysis_scripts/bin | grep -Ev '.py|.mp4|__'

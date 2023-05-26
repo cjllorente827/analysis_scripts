@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+
+from analysis_scripts import findEnzoOuts
+from analysis_scripts.src.CGM_analysis.run_pipeline import run_pipeline
+
+if __name__ == "__main__":
+    
+    enzoOuts = findEnzoOuts()
+    boxSpec = "Tempest_box_at_z_0.csv"
+    run_pipeline(enzoOuts, boxSpec)

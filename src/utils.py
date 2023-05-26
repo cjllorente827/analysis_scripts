@@ -1,12 +1,17 @@
 import os, re
 from .Box import Box
 import yt
+import numpy as np
+
+from ndustria import AddTask
 
 CMAPS = {
     "density" : "viridis",
     "temperature" : "plasma",
     "entropy" : "cividis",
-    'radial_velocity' : "coolwarm"
+    'radial_velocity' : "coolwarm",
+    "O_p5_number_density" : "magma",
+    "O_p5_ion_fraction" : "bwr",
 }
 
 def ensureDirExists(path):
@@ -40,7 +45,7 @@ def getDataBoxAndRegion(enzo_dataset, box_spec_file):
 
     """Convenience function that takes the filepaths of an enzo dataset and
     and Box specifier and returns a YTDataset and YTRegion for each on
-    respectively.
+    respectively. Also sets field parameters to keep YT happy
     
     Arguments:
     enzo_dataset -- Filepath to a single enzo dataset
@@ -60,6 +65,17 @@ def getDataBoxAndRegion(enzo_dataset, box_spec_file):
         LL[2]:UR[2],
     ]
 
+    # This is necessary to keep yt from shitting its pants
+    center_field_parameter = yt.YTArray(
+        [
+            ds.quan(box.center[0], "code_length"),
+            ds.quan(box.center[1], "code_length"),
+            ds.quan(box.center[2], "code_length")
+        ]
+    )
+    region.set_field_parameter("center", center_field_parameter)
+
+
     return ds, box, region
 
 
@@ -68,11 +84,21 @@ def getOutputDir():
     if "ANALYSIS_OUT" not in os.environ:
         return f"{os.path.expanduser('~/analysis_scripts/output')}"
     else:
-        return os.environ["ANALYSIS_OUT"]
+        return os.path.expanduser(os.environ["ANALYSIS_OUT"])
     
 def getTempDir():
 
     if "ANALYSIS_TEMP" not in os.environ:
         return f"{os.path.expanduser('~/analysis_scripts/temp')}"
     else:
-        return os.environ["ANALYSIS_TEMP"]
+        return os.path.expanduser(os.environ["ANALYSIS_TEMP"])
+
+
+# Simply returns the data of the given field within the given region
+# and stores it away for future use
+@AddTask()
+def getFieldData(region, field):
+
+    data = region[field]
+
+    return data

@@ -21,7 +21,7 @@ class Box:
 
 
     def __str__(self):
-        return f"A box located at ({self.x},{self.y},{self.z}) with side length {self.length}"
+        return f"Box: ({self.center[0]},{self.center[1]},{self.center[2]}), Box Length: {self.length}"
     
     def __repr__(self):
         return str(self)

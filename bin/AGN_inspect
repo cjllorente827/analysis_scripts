@@ -1,9 +1,9 @@
 #!/opt/software/Python/3.9.5-GCCcore-10.3.0/bin/python
 
 from ndustria import Pipeline
+import os
 
-from AGN_inspect_Tasks import *
-from AGN_inspect_Views import *
+from analysis_scripts import *
 
 import yt
 
@@ -11,10 +11,11 @@ enzo_out_dir = os.getcwd()
 
 simulation = yt.load(enzo_out_dir + "/DD????/DD????")
 
+data = []
 for output in simulation.outputs:
 
-    getAllAGNData(output)
+    data.append( getAllAGNData(output) )
 
-AGNFullView()
+AGNFullView(data)
 
 Pipeline.run(parallel=True)
