@@ -14,6 +14,15 @@
             "justMyCode": false
         },
         {
+            "name": "UMAP test",
+            "type": "python",
+            "request": "launch",
+            "program": "/mnt/home/llorente/analysis_scripts/bin/run_umap_test",
+            "cwd" : "/mnt/gs21/scratch/llorente/Tempest",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "AGN_test",
             "type": "python",
             "request": "launch",

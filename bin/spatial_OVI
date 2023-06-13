@@ -1,0 +1,56 @@
+#!/opt/software/Python/3.9.5-GCCcore-10.3.0/bin/python
+
+from analysis_scripts import *
+import trident
+
+def main(enzo_dataset, box_spec_file):
+
+    ds, box, region = getDataBoxAndRegion(enzo_dataset, box_spec_file)
+
+    # set the center
+    # Its important to set the center field parameter to a ytarray
+    # in code_length units. 
+    # If you don't yt will be sad :(
+    center = ds.arr(box.center, "code_length") 
+    region.set_field_parameter("center", box.center)
+
+    # cut the disk out
+    inner_sphere = ds.sphere(box.center, (10, "kpc"))
+    outer_sphere = ds.sphere(box.center, (200, "kpc")) 
+
+    cgm = outer_sphere - inner_sphere
+
+    cgm_cut = cgm.cut_region("(obj['temperature'] > 1.5e4) | (obj['density'] < 2e-26)")
+    # Cut regions don't use their own field_parameters for calculations
+    # they use their underlying base_object parameters
+    cgm_cut.base_object.set_field_parameter("center", center)
+
+    # on my ion bullshit
+    all_ion_list=[
+        'H I',
+        'C II','C III','C IV',
+        'Si II','Si III','Si IV',
+        'O I','O II','O III','O IV','O V','O VI','O VII','O VIII'
+    ]
+
+    important_ion_list = [
+        'H I',
+        'C IV',
+        'O VI',
+        'Mg II',
+        'Si III'
+    ]
+
+    trident.add_ion_fields(ds, ions=important_ion_list)
+
+    high_OVI_region = cgm_cut.cut_region("obj['O_p5_ion_fraction'] > 0.1")
+
+    warm_OVI = high_OVI_region.cut_region("obj['temperature'] > 1e5")
+    cold_OVI = high_OVI_region.cut_region("obj['temperature'] < 1e5")
+
+
+if __name__ == "__main__":
+    
+    enzoOuts = findEnzoOuts()
+    boxSpec = "Tempest_box_at_z_0.csv"
+    main(enzoOuts, boxSpec)
